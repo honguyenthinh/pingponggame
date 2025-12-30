@@ -1,0 +1,154 @@
+🎮 GIẢI THÍCH CHI TIẾT CODE GAME “PING PONG - NOSE CONTROL”
+I. Import thư viện
+import pygame, sys, random, math, cv2
+import mediapipe as mp
+pygame: tạo game 2D.
+
+sys: thoát chương trình.
+
+random: random góc bắn bóng.
+
+math: dùng sin, cos tính góc bóng.
+
+cv2 (OpenCV): đọc camera.
+
+mediapipe: nhận diện gương mặt → lấy vị trí mũi để điều khiển paddle.
+
+II. Cấu hình hệ thống
+SCREEN_W, SCREEN_H = 640, 480
+FPS = 60
+Màn hình 640x480.
+
+FPS = 60 hình/giây.
+
+PADDLE_W, PADDLE_H = 140, 18
+BALL_R = 10
+Kích thước thanh đỡ và bán kính bóng.
+
+BRICK_COLS = 8
+BRICK_H = 22
+BRICK_GAP = 4
+BRICK_TOP = 60
+Thông số cho các viên gạch (Breakout-style).
+
+LIVES = 3
+MAX_LEVEL = 3
+Người chơi có 3 mạng.
+
+Có tối đa 3 level.
+
+III. Định nghĩa màu và tiện ích
+WHITE = (255,255,255)
+...
+COLORS = [...]
+Danh sách màu cho viên gạch.
+
+Hàm tiện ích
+def clamp(v,a,b): return max(a,min(v,b))
+→ Giữ giá trị trong khoảng [a, b].
+
+def lerp(a,b,t): return a+(b-a)*t
+→ Nội suy tuyến tính (dùng để làm mượt chuyển động mũi).
+
+def circle_rect(cx,cy,r,rect):
+→ Kiểm tra bóng tròn chạm hình chữ nhật.
+
+IV. Class Paddle (Thanh đỡ)
+class Paddle:
+Khởi tạo:
+self.x = SCREEN_W//2-self.w//2
+self.y = SCREEN_H-80
+→ Paddle nằm phía dưới màn hình.
+
+Hàm move
+self.x = clamp(x,0,SCREEN_W-self.w)
+→ Giới hạn không cho paddle ra ngoài màn hình.
+
+Hàm draw
+pygame.draw.rect(...)
+→ Vẽ paddle.
+
+V. Class Ball (Bóng)
+class Ball:
+reset:
+angle = random.uniform(-0.9,0.9)
+self.vx = sin(angle)*speed
+self.vy = -abs(cos(angle)*speed)
+→ Bóng bắn lên trên với góc ngẫu nhiên.
+
+update:
+self.x += self.vx
+self.y += self.vy
+→ Cập nhật vị trí bóng mỗi frame.
+
+VI. Class Brick (Gạch)
+Đơn giản: tạo hình chữ nhật + vẽ.
+
+VII. Class FloatingText (Hiệu ứng +10)
+Xuất hiện khi gạch vỡ.
+
+Tự bay lên và biến mất.
+
+VIII. Camera + Mediapipe (Điều khiển bằng mũi)
+self.face = mp.solutions.face_mesh.FaceMesh(max_num_faces=1)
+read()
+Đọc khung hình camera.
+
+Dò gương mặt.
+
+Lấy landmark mũi (index 1).
+
+Làm mượt bằng lerp.
+
+Trả về tọa độ mũi (0→1).
+
+IX. Hàm build_bricks(level)
+Tạo nhiều hàng gạch tùy level.
+
+X. Khởi tạo Pygame
+pygame.init()
+screen = pygame.display.set_mode(...)
+XI. Màn hình menu
+message_screen("PING PONG", "Move NOSE | SPACE start | ESC exit")
+→ Hiện tiêu đề và chờ SPACE.
+
+XII. Vòng lặp GAME CHÍNH
+while True:
+1. Tạo lại paddle, bóng, gạch mỗi lượt chơi
+2. Camera điều khiển paddle
+norm = cam.read()
+paddle.move(norm[0]*SCREEN_W - paddle.w/2, ...)
+→ Ánh xạ tọa độ mũi (0–1) → pixel.
+
+3. Vật lý bóng
+Chạm tường → đảo chiều.
+
+Chạm paddle → tính lại góc bằng sin/cos.
+
+Chạm gạch → phá gạch +10 điểm.
+
+Rơi xuống → mất mạng.
+
+4. Thắng/thua level
+Không còn gạch → qua level mới.
+
+Hết mạng → Game Over.
+
+5. Vẽ mọi thứ lên màn hình
+Nền camera.
+
+Gạch.
+
+Paddle.
+
+Bóng.
+
+Điểm.
+
+Mạng.
+
+Level.
+
+XIII. Kết thúc vòng lặp
+pygame.display.flip()
+→ Cập nhật hình ảnh lên màn hình.
